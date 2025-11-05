@@ -260,6 +260,30 @@ npx @cardog/corgi decode 1HGCM82633A123456 \
 npx @cardog/corgi --help
 ```
 
+## 🌐 HTTP Endpoint Example
+
+Expose the decoder through a minimal HTTP API without adding extra dependencies:
+
+```bash
+pnpm install
+node examples/http-endpoint.js
+```
+
+This starts a server on port `3000` (override with `PORT=8080 node examples/http-endpoint.js`).
+
+Decode any VIN by hitting the `/decode` endpoint:
+
+```bash
+curl "http://localhost:3000/decode?vin=KM8K2CAB4PU001140"
+```
+
+The JSON response contains the `vehicle`, `engine`, `plant`, and validation details surfaced by the library, including drivetrain, cab, bed length, and wheelbase when available.
+
+### Local VIN testing tips
+
+- Use the CLI commands above for quick checks: `npx @cardog/corgi decode YOURVIN`.
+- Run the HTTP example above to integrate with tools that expect an API.
+
 ## 💾 Database & Caching
 
 ### Automatic Database Management
