@@ -279,10 +279,20 @@ curl "http://localhost:3000/decode?vin=KM8K2CAB4PU001140"
 
 The JSON response contains the `vehicle`, `engine`, `plant`, and validation details surfaced by the library, including drivetrain, cab, bed length, and wheelbase when available.
 
+### Testing with Postman or API clients
+
+Prefer a GUI over `curl`? Import the Postman assets in [`examples/postman`](examples/postman) and point them at your locally running server:
+
+1. Start the example server (defaults to port `3000`).
+2. In Postman, choose **File → Import**, select `examples/postman/corgi-decoder.postman_collection.json`, and optionally `examples/postman/local.postman_environment.json`.
+3. Select the imported **Corgi VIN Decoder** collection and run the **Decode VIN** request. It is configured as a `GET` request to `{{baseUrl}}/decode` with a `vin` query parameter. The included environment sets `baseUrl` to `http://localhost:3000` so you can swap between local and remote servers quickly.
+
+Any other REST client (Insomnia, Bruno, Hoppscotch, etc.) can hit the same `GET http://localhost:3000/decode?vin=YOURVIN` endpoint—just supply the VIN as the `vin` query parameter.
+
 ### Local VIN testing tips
 
 - Use the CLI commands above for quick checks: `npx @cardog/corgi decode YOURVIN`.
-- Run the HTTP example above to integrate with tools that expect an API.
+- Run the HTTP example above to integrate with tools that expect an API or to test with Postman.
 
 ## 💾 Database & Caching
 
