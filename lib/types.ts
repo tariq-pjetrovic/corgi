@@ -304,11 +304,23 @@ export interface VehicleInfo {
   /** Drive type (e.g., "AWD", "4x2") */
   driveType?: string;
 
+  /** Drivetrain configuration (alias for {@link driveType}) */
+  drivetrain?: string;
+
   /** Engine type */
   engineType?: string;
 
   /** Primary fuel type */
   fuelType?: string;
+
+  /** Cab configuration (for trucks, vans, etc.) */
+  cab?: string;
+
+  /** Bed length specification when applicable */
+  bedLength?: string;
+
+  /** Wheelbase specification when available */
+  wheelbase?: string;
 
   /** Transmission type */
   transmission?: string;
