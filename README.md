@@ -48,8 +48,12 @@ console.log(result.components.vehicle);
 //   year: 2023,
 //   series: 'SE',
 //   bodyStyle: 'SUV',
-//   driveType: '4WD/4-Wheel Drive/4x4',
+//   drivetrain: '4WD/4-Wheel Drive/4x4',
 //   fuelType: 'Gasoline',
+//   trim: 'Limited', // When available
+//   cab: 'Crew Cab', // When available
+//   bedLength: '67 inches', // When available
+//   wheelbase: '103.5 inches', // When available
 //   doors: '5'
 // }
 
@@ -60,8 +64,8 @@ await decoder.close();
 
 Corgi extracts comprehensive vehicle information from any VIN:
 
-- **Vehicle Details**: Make, model, year, series, trim, body style
-- **Technical Specs**: Engine details, drivetrain, fuel type, doors
+- **Vehicle Details**: Make, model, year, series, trim, body style, cab configuration, bed length, wheelbase
+- **Technical Specs**: Engine details, drivetrain (also available as `driveType`), fuel type, doors
 - **Manufacturing**: Plant location, manufacturer, production details
 - **Quality Metrics**: Confidence scores and validation results
 - **Standards Compliance**: Full NHTSA VPIC dataset integration
@@ -153,10 +157,15 @@ interface DecodeResult {
       make: string; // e.g., "Honda", "Toyota"
       model: string; // e.g., "Civic", "Camry"
       year: number; // Model year
-      series?: string; // Trim/series level
+      series?: string; // Series level
+      trim?: string; // Trim level
       bodyStyle?: string; // "Sedan", "SUV", "Pickup"
-      driveType?: string; // "FWD", "AWD", "4WD"
+      driveType?: string; // "FWD", "AWD", "4WD" (legacy alias)
+      drivetrain?: string; // Preferred drivetrain property
       fuelType?: string; // "Gasoline", "Electric"
+      cab?: string; // Cab configuration when available
+      bedLength?: string; // Truck bed length details
+      wheelbase?: string; // Wheelbase details when available
       doors?: string; // Number of doors
     };
 
