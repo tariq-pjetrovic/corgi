@@ -4,13 +4,14 @@ import {
   createWriteStream,
   existsSync,
   mkdirSync,
-  readdirSync,
+  unlinkSync,
 } from "fs";
 import { join, dirname } from "path";
 import { homedir } from "os";
 import { pipeline } from "stream/promises";
 import { fileURLToPath } from "url";
 import { createLogger } from "../logger";
+import { request } from "https";
 
 const logger = createLogger("DbUtils");
 
@@ -36,6 +37,9 @@ const DIRNAME = getDirname();
 // Path constants
 const CACHE_DIR = join(homedir(), ".corgi-cache");
 const CACHE_DB_PATH = join(CACHE_DIR, "vpic.lite.db");
+const DEFAULT_DB_DOWNLOAD_URL =
+  "https://github.com/cardog-ai/corgi/releases/latest/download/vpic.lite.db.gz";
+let downloadInProgress: Promise<void> | null = null;
 
 /**
  * Get potential paths for the compressed database in order of preference
@@ -150,11 +154,45 @@ export async function getDatabasePath(
       }
     }
 
-    // If we get here, we couldn't find any database file
-    logger.error("No database files found at any of the expected locations");
-    throw new Error(
-      "Database file not found. Please specify a database path explicitly when creating the decoder."
+    // If we get here, we couldn't find any database file - attempt download
+    const downloadUrl =
+      process.env.CORGI_DB_URL ??
+      process.env.CORGI_DATABASE_URL ??
+      DEFAULT_DB_DOWNLOAD_URL;
+
+    if (process.env.CORGI_DISABLE_DB_DOWNLOAD === "1") {
+      logger.error(
+        "No database files found and automatic download disabled via CORGI_DISABLE_DB_DOWNLOAD"
+      );
+      throw new Error(
+        "Database file not found and automatic download is disabled. Provide a databasePath option when creating the decoder."
+      );
+    }
+
+    logger.warn(
+      { downloadUrl },
+      "No database files found locally. Attempting download"
     );
+
+    try {
+      downloadInProgress ??= downloadAndPrepareDatabase(
+        downloadUrl,
+        CACHE_DB_PATH
+      ).finally(() => {
+        downloadInProgress = null;
+      });
+
+      await downloadInProgress;
+      return CACHE_DB_PATH;
+    } catch (error: any) {
+      logger.error(
+        { error, downloadUrl },
+        "Database download failed"
+      );
+      throw new Error(
+        `Failed to download database automatically from ${downloadUrl}. Provide a databasePath option or set CORGI_DB_URL to a reachable file.`
+      );
+    }
   } catch (error: any) {
     logger.error({ error }, "Failed to prepare database");
     throw new Error(`Failed to prepare database: ${error.message}`);
@@ -201,4 +239,99 @@ async function copyFile(sourcePath: string, destPath: string): Promise<void> {
     logger.error({ error }, "File copy failed");
     throw error;
   }
+}
+
+/**
+ * Download the compressed database and prepare it for use
+ */
+async function downloadAndPrepareDatabase(
+  url: string,
+  destinationPath: string
+): Promise<void> {
+  const compressedDestination = `${destinationPath}.gz`;
+
+  await downloadFile(url, compressedDestination);
+
+  try {
+    await decompressDatabase(compressedDestination, destinationPath);
+  } finally {
+    try {
+      unlinkSync(compressedDestination);
+    } catch (error) {
+      logger.warn(
+        { error, compressedDestination },
+        "Failed to remove temporary compressed database file"
+      );
+    }
+  }
+}
+
+/**
+ * Download a file from a URL with redirect support
+ */
+function downloadFile(url: string, destination: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const file = createWriteStream(destination);
+
+    const cleanupAndReject = (error: Error) => {
+      try {
+        file.close();
+      } catch {}
+      try {
+        unlinkSync(destination);
+      } catch {}
+      reject(error);
+    };
+
+    const doRequest = (currentUrl: string, redirectCount = 0) => {
+      if (redirectCount > 5) {
+        cleanupAndReject(
+          new Error("Too many redirects while downloading database")
+        );
+        return;
+      }
+
+      const req = request(currentUrl, (res) => {
+        if (
+          res.statusCode &&
+          res.statusCode >= 300 &&
+          res.statusCode < 400 &&
+          res.headers.location
+        ) {
+          const redirectUrl = new URL(res.headers.location, currentUrl).toString();
+          res.resume();
+          doRequest(redirectUrl, redirectCount + 1);
+          return;
+        }
+
+        if (res.statusCode !== 200) {
+          res.resume();
+          cleanupAndReject(
+            new Error(
+              `Failed to download database. HTTP status: ${res.statusCode}`
+            )
+          );
+          return;
+        }
+
+        res.pipe(file);
+        file.on("finish", () => {
+          file.close();
+          resolve();
+        });
+      });
+
+      req.on("error", (error) => {
+        cleanupAndReject(error);
+      });
+
+      req.end();
+    };
+
+    file.on("error", (error) => {
+      cleanupAndReject(error);
+    });
+
+    doRequest(url);
+  });
 }

@@ -311,6 +311,11 @@ const decoder2 = await createDecoder();
 const freshDecoder = await createDecoder({ forceFresh: true });
 ```
 
+When no local database is available (for example, when running from a fresh clone of this repository), the decoder automatically
+downloads the latest optimized VPIC snapshot from the official Corgi release and caches it in `~/.corgi-cache`. Override the
+download source by setting `CORGI_DB_URL` (or `CORGI_DATABASE_URL`), or disable the automatic download with
+`CORGI_DISABLE_DB_DOWNLOAD=1` and supply your own `databasePath`.
+
 ### Cache Storage Locations
 
 - **Node.js**: `~/.corgi-cache/vpic.lite.db` (User home directory)
