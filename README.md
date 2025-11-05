@@ -48,8 +48,12 @@ console.log(result.components.vehicle);
 //   year: 2023,
 //   series: 'SE',
 //   bodyStyle: 'SUV',
-//   driveType: '4WD/4-Wheel Drive/4x4',
+//   drivetrain: '4WD/4-Wheel Drive/4x4',
 //   fuelType: 'Gasoline',
+//   trim: 'Limited', // When available
+//   cab: 'Crew Cab', // When available
+//   bedLength: '67 inches', // When available
+//   wheelbase: '103.5 inches', // When available
 //   doors: '5'
 // }
 
@@ -60,8 +64,8 @@ await decoder.close();
 
 Corgi extracts comprehensive vehicle information from any VIN:
 
-- **Vehicle Details**: Make, model, year, series, trim, body style
-- **Technical Specs**: Engine details, drivetrain, fuel type, doors
+- **Vehicle Details**: Make, model, year, series, trim, body style, cab configuration, bed length, wheelbase
+- **Technical Specs**: Engine details, drivetrain (also available as `driveType`), fuel type, doors
 - **Manufacturing**: Plant location, manufacturer, production details
 - **Quality Metrics**: Confidence scores and validation results
 - **Standards Compliance**: Full NHTSA VPIC dataset integration
@@ -153,10 +157,15 @@ interface DecodeResult {
       make: string; // e.g., "Honda", "Toyota"
       model: string; // e.g., "Civic", "Camry"
       year: number; // Model year
-      series?: string; // Trim/series level
+      series?: string; // Series level
+      trim?: string; // Trim level
       bodyStyle?: string; // "Sedan", "SUV", "Pickup"
-      driveType?: string; // "FWD", "AWD", "4WD"
+      driveType?: string; // "FWD", "AWD", "4WD" (legacy alias)
+      drivetrain?: string; // Preferred drivetrain property
       fuelType?: string; // "Gasoline", "Electric"
+      cab?: string; // Cab configuration when available
+      bedLength?: string; // Truck bed length details
+      wheelbase?: string; // Wheelbase details when available
       doors?: string; // Number of doors
     };
 
@@ -250,6 +259,40 @@ npx @cardog/corgi decode 1HGCM82633A123456 \
 # Help
 npx @cardog/corgi --help
 ```
+
+## 🌐 HTTP Endpoint Example
+
+Expose the decoder through a minimal HTTP API without adding extra dependencies:
+
+```bash
+pnpm install
+node examples/http-endpoint.js
+```
+
+This starts a server on port `3000` (override with `PORT=8080 node examples/http-endpoint.js`).
+
+Decode any VIN by hitting the `/decode` endpoint:
+
+```bash
+curl "http://localhost:3000/decode?vin=KM8K2CAB4PU001140"
+```
+
+The JSON response contains the `vehicle`, `engine`, `plant`, and validation details surfaced by the library, including drivetrain, cab, bed length, and wheelbase when available.
+
+### Testing with Postman or API clients
+
+Prefer a GUI over `curl`? Import the Postman assets in [`examples/postman`](examples/postman) and point them at your locally running server:
+
+1. Start the example server (defaults to port `3000`).
+2. In Postman, choose **File → Import**, select `examples/postman/corgi-decoder.postman_collection.json`, and optionally `examples/postman/local.postman_environment.json`.
+3. Select the imported **Corgi VIN Decoder** collection and run the **Decode VIN** request. It is configured as a `GET` request to `{{baseUrl}}/decode` with a `vin` query parameter. The included environment sets `baseUrl` to `http://localhost:3000` so you can swap between local and remote servers quickly.
+
+Any other REST client (Insomnia, Bruno, Hoppscotch, etc.) can hit the same `GET http://localhost:3000/decode?vin=YOURVIN` endpoint—just supply the VIN as the `vin` query parameter.
+
+### Local VIN testing tips
+
+- Use the CLI commands above for quick checks: `npx @cardog/corgi decode YOURVIN`.
+- Run the HTTP example above to integrate with tools that expect an API or to test with Postman.
 
 ## 💾 Database & Caching
 
