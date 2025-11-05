@@ -142,6 +142,18 @@ describe("VIN Decoder Library", () => {
       expect(result.components.vehicle?.year).toBe(
         VALID_TEST_CASES[0].expected.year
       );
+      expect(result.components.vehicle).toHaveProperty("drivetrain");
+      expect(result.components.vehicle).toHaveProperty("fuelType");
+      expect(result.components.vehicle).toHaveProperty("trim");
+      expect(result.components.vehicle).toHaveProperty("cab");
+      expect(result.components.vehicle).toHaveProperty("bedLength");
+      expect(result.components.vehicle).toHaveProperty("wheelbase");
+
+      if (result.components.vehicle?.driveType) {
+        expect(result.components.vehicle?.drivetrain).toBe(
+          result.components.vehicle?.driveType
+        );
+      }
 
       // Check manufacturer info
       expect(result.components.wmi).toBeDefined();
