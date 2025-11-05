@@ -1,0 +1,26 @@
+{
+  "info": {
+    "_postman_id": "b6d54f2f-b5df-43bf-8ec5-8f3e2b6df9f1",
+    "name": "Corgi VIN Decoder",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection for testing the Corgi VIN decoder HTTP example."
+  },
+  "item": [
+    {
+      "name": "Decode VIN",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/decode?vin=KM8K2CAB4PU001140",
+        "description": "Decode a VIN using the local Corgi HTTP endpoint."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    }
+  ]
+}
