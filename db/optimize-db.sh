@@ -79,6 +79,7 @@ WHERE ElementId NOT IN (
         'Body Class', 'Body Style', 'Doors',
         'DriveType', 'Engine Model', 'Engine Configuration',
         'Fuel Type - Primary', 'Fuel Type', 'Transmission',
+        'Body Cab', 'Bed Type', 'Wheel Base Type',
         -- Additional useful elements
         'Other Engine Info', 'Other Restraint System Info',
         'Turbo', 'Displacement (L)', 'Displacement (CC)',
@@ -110,7 +111,7 @@ run_sql "Removing unused tables while keeping essential ones" "
 -- Series, Trim
 -- Plant, Plant_Country, Plant_City, Plant_State
 -- Body_Style, DriveType, Engine_Model, Engine_Configuration
--- FuelType, Transmission
+-- FuelType, Transmission, BedType, BodyCab, WheelBaseType
 -- Turbo, Displacement, Cylinders
 -- Battery_Type, Charger_Level
 
