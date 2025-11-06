@@ -27,6 +27,154 @@ import {
 // Create logger for the decoder
 const logger = createLogger('VINDecoder');
 
+const CAB_CANONICAL_VALUES = [
+  'Crew/Super Crew/Crew Max',
+  'Extra/Super/Quad/Double/King/Extended',
+  'Mega',
+  'Regular',
+  'Cab Beside Engine',
+  'Cab Above Engine',
+  'Cab Behind Engine',
+  'Cab Over Engine',
+  'Conventional',
+  'Non-Tilt',
+  'Tilt',
+  'LCF',
+  'LCF (Low Cab Forward)',
+];
+
+const BED_CANONICAL_VALUES = ['Standard', 'Short', 'Long', 'Extended'];
+
+const WHEELBASE_CANONICAL_VALUES = [
+  'Extra Long',
+  'Super Long',
+  'Long',
+  'Medium',
+  'Standard',
+  'Short',
+];
+
+function normalizeFromCanonical(
+  value: string | null | undefined,
+  canonicalValues: string[],
+): string | undefined {
+  if (!value) return undefined;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  const directMatch = canonicalValues.find(
+    entry => entry.toLowerCase() === trimmed.toLowerCase(),
+  );
+
+  return directMatch;
+}
+
+function normalizeCabValue(value: string | null | undefined): string | undefined {
+  const normalized = normalizeFromCanonical(value, CAB_CANONICAL_VALUES);
+  if (normalized) {
+    return normalized;
+  }
+
+  const fallback = value?.trim();
+  if (!fallback) return undefined;
+
+  if (/crew/i.test(fallback)) {
+    return 'Crew/Super Crew/Crew Max';
+  }
+
+  if (/(extra|super|quad|double|king|extended)/i.test(fallback)) {
+    return 'Extra/Super/Quad/Double/King/Extended';
+  }
+
+  if (/mega/i.test(fallback)) {
+    return 'Mega';
+  }
+
+  if (/regular/i.test(fallback)) {
+    return 'Regular';
+  }
+
+  return fallback;
+}
+
+function normalizeBedTypeValue(value: string | null | undefined): string | undefined {
+  if (!value) return undefined;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  // Ignore literal measurements like "67 inches"
+  if (/\d/.test(trimmed) && /(in(ches)?|mm|cm)/i.test(trimmed)) {
+    return undefined;
+  }
+
+  const canonical = normalizeFromCanonical(trimmed, BED_CANONICAL_VALUES);
+  if (canonical) {
+    return canonical;
+  }
+
+  if (/short/i.test(trimmed)) {
+    return 'Short';
+  }
+
+  if (/long/i.test(trimmed)) {
+    return 'Long';
+  }
+
+  if (/extended/i.test(trimmed)) {
+    return 'Extended';
+  }
+
+  if (/standard|std/i.test(trimmed)) {
+    return 'Standard';
+  }
+
+  return trimmed;
+}
+
+function normalizeWheelbaseValue(value: string | null | undefined): string | undefined {
+  if (!value) return undefined;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  if (/\d/.test(trimmed) && /(in(ches)?|mm|cm)/i.test(trimmed)) {
+    return undefined;
+  }
+
+  const canonical = normalizeFromCanonical(trimmed, WHEELBASE_CANONICAL_VALUES);
+  if (canonical) {
+    return canonical;
+  }
+
+  if (/super\s*long/i.test(trimmed)) {
+    return 'Super Long';
+  }
+
+  if (/extra\s*long/i.test(trimmed)) {
+    return 'Extra Long';
+  }
+
+  if (/long/i.test(trimmed)) {
+    return 'Long';
+  }
+
+  if (/medium/i.test(trimmed)) {
+    return 'Medium';
+  }
+
+  if (/standard/i.test(trimmed)) {
+    return 'Standard';
+  }
+
+  if (/short/i.test(trimmed)) {
+    return 'Short';
+  }
+
+  return trimmed;
+}
+
 /**
  * Helper function to decode a VIN using a provided database adapter
  *
@@ -331,17 +479,28 @@ export class VINDecoder {
   ): VehicleInfo {
     const info: VehicleInfo = {
       make: wmiInfo.make || '',
+      makeId: wmiInfo.makeId ? String(wmiInfo.makeId) : undefined,
       model: '',
+      modelId: undefined,
       year: modelYear.year,
       manufacturer: wmiInfo.manufacturer,
       gvwr: '',
+      series: undefined,
+      seriesId: undefined,
       trim: undefined,
+      trimId: undefined,
       fuelType: undefined,
+      fuelTypeId: undefined,
       driveType: undefined,
+      driveTypeId: undefined,
       drivetrain: undefined,
+      drivetrainId: undefined,
       cab: undefined,
-      bedLength: undefined,
+      cabTypeId: undefined,
+      bed: undefined,
+      bedTypeId: undefined,
       wheelbase: undefined,
+      wheelbaseId: undefined,
     };
 
     // First, sort model patterns by elementWeight (if available)
@@ -360,7 +519,9 @@ export class VINDecoder {
 
     // Set model from highest weight pattern if available
     if (modelPatterns.length > 0) {
-      info.model = modelPatterns[0].value!;
+      const bestModel = modelPatterns[0];
+      info.model = bestModel.value!;
+      info.modelId = bestModel.attributeId ? String(bestModel.attributeId) : undefined;
     }
 
     // Track fuel types to determine if vehicle is hybrid
@@ -374,14 +535,23 @@ export class VINDecoder {
       switch (pattern.element) {
         case 'Make':
           info.make = pattern.value;
+          if (pattern.attributeId) {
+            info.makeId = String(pattern.attributeId);
+          }
           break;
         // Skip "Model" as we've already handled it
         case 'Series':
           info.series = pattern.value;
+          if (pattern.attributeId) {
+            info.seriesId = String(pattern.attributeId);
+          }
           break;
         case 'Trim':
         case 'Trim Level':
           info.trim = pattern.value;
+          if (pattern.attributeId) {
+            info.trimId = String(pattern.attributeId);
+          }
           break;
         case 'Body Class':
         case 'Body Style':
@@ -390,6 +560,10 @@ export class VINDecoder {
         case 'Drive Type':
           info.driveType = pattern.value;
           info.drivetrain = pattern.value;
+          if (pattern.attributeId) {
+            info.driveTypeId = String(pattern.attributeId);
+            info.drivetrainId = String(pattern.attributeId);
+          }
           break;
         case 'Drive Type - Primary':
         case 'Drive Configuration':
@@ -397,6 +571,12 @@ export class VINDecoder {
           info.drivetrain = pattern.value;
           if (!info.driveType) {
             info.driveType = pattern.value;
+          }
+          if (pattern.attributeId) {
+            info.drivetrainId = String(pattern.attributeId);
+            if (!info.driveTypeId) {
+              info.driveTypeId = String(pattern.attributeId);
+            }
           }
           break;
         case 'Cab Type':
@@ -406,21 +586,68 @@ export class VINDecoder {
         case 'Body Cab Type':
         case 'Body Cab':
         case 'BodyCab':
-        case 'BodyCabType':
-          info.cab = pattern.value;
+        case 'BodyCabType': {
+          const normalizedCab = normalizeCabValue(pattern.value);
+          if (pattern.metadata?.lookupTable === 'BodyCab') {
+            if (normalizedCab) {
+              info.cab = normalizedCab;
+            }
+            if (pattern.attributeId) {
+              info.cabTypeId = String(pattern.attributeId);
+            }
+            break;
+          }
+
+          if (!info.cab && normalizedCab) {
+            info.cab = normalizedCab;
+          }
+
+          if (pattern.attributeId && !info.cabTypeId) {
+            info.cabTypeId = String(pattern.attributeId);
+          }
+
           break;
-        case 'Bed Length':
+        }
         case 'Bed Type':
         case 'BedType':
-        case 'Cargo Bed Type':
+        case 'Cargo Bed Type': {
+          const normalizedBed = normalizeBedTypeValue(pattern.value);
+          if (normalizedBed) {
+            info.bed = normalizedBed;
+          }
+          if (pattern.attributeId) {
+            info.bedTypeId = String(pattern.attributeId);
+          }
+          break;
+        }
+        case 'Bed Length':
         case 'Cargo Bed Length':
         case 'Cargo Bed Length (IN)':
         case 'Cargo Bed Length (inches)':
         case 'Cargo Bed Length (in) - Min':
         case 'Cargo Bed Length (in) - Max':
-        case 'Truck Bed Length':
-          info.bedLength = pattern.value;
+        case 'Truck Bed Length': {
+          const normalizedBed = normalizeBedTypeValue(pattern.value);
+          if (!info.bed && normalizedBed) {
+            info.bed = normalizedBed;
+          }
+          if (pattern.attributeId && !info.bedTypeId) {
+            info.bedTypeId = String(pattern.attributeId);
+          }
           break;
+        }
+        case 'Wheel Base Type':
+        case 'WheelBaseType':
+        case 'Wheelbase Type': {
+          const normalizedWheelbase = normalizeWheelbaseValue(pattern.value);
+          if (normalizedWheelbase) {
+            info.wheelbase = normalizedWheelbase;
+          }
+          if (pattern.attributeId) {
+            info.wheelbaseId = String(pattern.attributeId);
+          }
+          break;
+        }
         case 'Wheel Base':
         case 'Wheel Base (Inches) - Min':
         case 'Wheel Base (Inches) - Max':
@@ -429,19 +656,29 @@ export class VINDecoder {
         case 'Wheelbase (inches)':
         case 'Wheel Base (inches)':
         case 'Wheel Base (in)':
-        case 'Wheel Base (mm)':
-        case 'Wheel Base Type':
-        case 'WheelBaseType':
-        case 'Wheelbase Type':
-          info.wheelbase = pattern.value;
+        case 'Wheel Base (mm)': {
+          const normalizedWheelbase = normalizeWheelbaseValue(pattern.value);
+          if (!info.wheelbase && normalizedWheelbase) {
+            info.wheelbase = normalizedWheelbase;
+          }
+          if (pattern.attributeId && !info.wheelbaseId) {
+            info.wheelbaseId = String(pattern.attributeId);
+          }
           break;
+        }
         case 'Fuel Type':
           primaryFuelType = pattern.value;
           info.fuelType = pattern.value;
+          if (pattern.attributeId) {
+            info.fuelTypeId = String(pattern.attributeId);
+          }
           break;
         case 'Fuel Type - Primary':
           primaryFuelType = pattern.value;
           info.fuelType = pattern.value;
+          if (pattern.attributeId) {
+            info.fuelTypeId = String(pattern.attributeId);
+          }
           break;
         case 'Fuel Type - Secondary':
           secondaryFuelType = pattern.value;

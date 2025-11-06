@@ -44,16 +44,26 @@ const result = await decoder.decode("KM8K2CAB4PU001140");
 console.log(result.components.vehicle);
 // {
 //   make: 'Hyundai',
+//   makeId: '482', // Example NHTSA make id (provided when available)
 //   model: 'Kona',
+//   modelId: '2107', // Example NHTSA model id (provided when available)
 //   year: 2023,
 //   series: 'SE',
+//   seriesId: '8452', // Example series id (when available)
 //   bodyStyle: 'SUV',
 //   drivetrain: '4WD/4-Wheel Drive/4x4',
+//   drivetrainId: '5', // Example drivetrain id (when available)
+//   driveType: '4WD/4-Wheel Drive/4x4',
 //   fuelType: 'Gasoline',
+//   fuelTypeId: '1', // Example fuel type id (when available)
 //   trim: 'Limited', // When available
-//   cab: 'Crew Cab', // When available
-//   bedLength: '67 inches', // When available
-//   wheelbase: '103.5 inches', // When available
+//   trimId: '15423', // Example trim id (when available)
+//   cab: 'Crew/Super Crew/Crew Max', // When available
+//   cabTypeId: '4', // Example cab id (when available)
+//   bed: 'Short', // When available
+//   bedTypeId: '2', // Example bed id (when available)
+//   wheelbase: 'Medium', // When available
+//   wheelbaseId: '6', // Example wheelbase id (when available)
 //   doors: '5'
 // }
 
@@ -64,7 +74,7 @@ await decoder.close();
 
 Corgi extracts comprehensive vehicle information from any VIN:
 
-- **Vehicle Details**: Make, model, year, series, trim, body style, cab configuration, bed length, wheelbase
+- **Vehicle Details**: Make, model, year, series, trim, body style, cab configuration, bed classification, wheelbase class, plus NHTSA IDs for make/model/trim/drivetrain/fuel type/cab/bed/wheelbase when available
 - **Technical Specs**: Engine details, drivetrain (also available as `driveType`), fuel type, doors
 - **Manufacturing**: Plant location, manufacturer, production details
 - **Quality Metrics**: Confidence scores and validation results
@@ -155,17 +165,27 @@ interface DecodeResult {
     vehicle?: {
       // Core vehicle information
       make: string; // e.g., "Honda", "Toyota"
+      makeId?: string; // NHTSA make identifier when available
       model: string; // e.g., "Civic", "Camry"
+      modelId?: string; // NHTSA model identifier when available
       year: number; // Model year
       series?: string; // Series level
+      seriesId?: string; // Series identifier when available
       trim?: string; // Trim level
+      trimId?: string; // Trim identifier when available
       bodyStyle?: string; // "Sedan", "SUV", "Pickup"
       driveType?: string; // "FWD", "AWD", "4WD" (legacy alias)
+      driveTypeId?: string; // Drive type identifier when available
       drivetrain?: string; // Preferred drivetrain property
+      drivetrainId?: string; // Drivetrain identifier when available
       fuelType?: string; // "Gasoline", "Electric"
+      fuelTypeId?: string; // Fuel type identifier when available
       cab?: string; // Cab configuration when available
-      bedLength?: string; // Truck bed length details
-      wheelbase?: string; // Wheelbase details when available
+      cabTypeId?: string; // Cab identifier when available
+      bed?: string; // Bed classification details when available
+      bedTypeId?: string; // Bed identifier when available
+      wheelbase?: string; // Wheelbase classification when available
+      wheelbaseId?: string; // Wheelbase identifier when available
       doors?: string; // Number of doors
     };
 
@@ -173,6 +193,7 @@ interface DecodeResult {
       // World Manufacturer Identifier
       manufacturer: string; // Official manufacturer name
       make: string; // Brand name
+      makeId?: number; // NHTSA make identifier when available
       country: string; // Country of origin
       region: string; // Geographic region
     };
@@ -277,7 +298,7 @@ Decode any VIN by hitting the `/decode` endpoint:
 curl "http://localhost:3000/decode?vin=KM8K2CAB4PU001140"
 ```
 
-The JSON response contains the `vehicle`, `engine`, `plant`, and validation details surfaced by the library, including drivetrain, cab, bed length, and wheelbase when available.
+The JSON response contains the `vehicle`, `engine`, `plant`, and validation details surfaced by the library, including drivetrain, cab, bed classification, and wheelbase when available.
 
 ### Testing with Postman or API clients
 

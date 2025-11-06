@@ -246,6 +246,9 @@ export interface WMIResult {
 
   /** Vehicle make/brand */
   make: string;
+
+  /** NHTSA make identifier associated with the WMI */
+  makeId?: number;
 }
 
 /**
@@ -286,8 +289,14 @@ export interface VehicleInfo {
   /** Vehicle manufacturer (e.g., "Hyundai") */
   make: string;
 
+  /** NHTSA make identifier */
+  makeId?: string;
+
   /** Vehicle model (e.g., "Kona") */
   model: string;
+
+  /** NHTSA model identifier */
+  modelId?: string;
 
   /** Model year (e.g., 2023) */
   year: number;
@@ -295,8 +304,14 @@ export interface VehicleInfo {
   /** Vehicle series or sub-model */
   series?: string;
 
+  /** Series identifier */
+  seriesId?: string;
+
   /** Trim level */
   trim?: string;
+
+  /** Trim identifier */
+  trimId?: string;
 
   /** Body style (e.g., "SUV", "Sedan") */
   bodyStyle?: string;
@@ -304,8 +319,14 @@ export interface VehicleInfo {
   /** Drive type (e.g., "AWD", "4x2") */
   driveType?: string;
 
+  /** Drive type identifier */
+  driveTypeId?: string;
+
   /** Drivetrain configuration (alias for {@link driveType}) */
   drivetrain?: string;
+
+  /** Drivetrain identifier (alias for {@link driveTypeId}) */
+  drivetrainId?: string;
 
   /** Engine type */
   engineType?: string;
@@ -313,14 +334,26 @@ export interface VehicleInfo {
   /** Primary fuel type */
   fuelType?: string;
 
+  /** Fuel type identifier */
+  fuelTypeId?: string;
+
   /** Cab configuration (for trucks, vans, etc.) */
   cab?: string;
 
-  /** Bed length specification when applicable */
-  bedLength?: string;
+  /** Cab type identifier */
+  cabTypeId?: string;
 
-  /** Wheelbase specification when available */
+  /** Bed configuration (e.g., "Short", "Standard") */
+  bed?: string;
+
+  /** Bed type identifier */
+  bedTypeId?: string;
+
+  /** Wheelbase classification (e.g., "Long", "Short") */
   wheelbase?: string;
+
+  /** Wheelbase type identifier */
+  wheelbaseId?: string;
 
   /** Transmission type */
   transmission?: string;
