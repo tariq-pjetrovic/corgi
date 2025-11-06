@@ -339,9 +339,9 @@ export class VINDecoder {
       fuelType: undefined,
       driveType: undefined,
       drivetrain: undefined,
-      cab: undefined,
-      bedLength: undefined,
-      wheelbase: undefined,
+      BodyCab: undefined,
+      BedType: undefined,
+      WheelBaseType: undefined,
     };
 
     // First, sort model patterns by elementWeight (if available)
@@ -403,7 +403,7 @@ export class VINDecoder {
         case 'Cab Style':
         case 'Cab Configuration':
         case 'Cab':
-          info.cab = pattern.value;
+          info.BodyCab = pattern.value;
           break;
         case 'Bed Length':
         case 'Cargo Bed Length':
@@ -412,7 +412,7 @@ export class VINDecoder {
         case 'Cargo Bed Length (in) - Min':
         case 'Cargo Bed Length (in) - Max':
         case 'Truck Bed Length':
-          info.bedLength = pattern.value;
+          info.BedType = pattern.value;
           break;
         case 'Wheel Base':
         case 'Wheel Base (Inches) - Min':
@@ -423,7 +423,7 @@ export class VINDecoder {
         case 'Wheel Base (inches)':
         case 'Wheel Base (in)':
         case 'Wheel Base (mm)':
-          info.wheelbase = pattern.value;
+          info.WheelBaseType = pattern.value;
           break;
         case 'Fuel Type':
           primaryFuelType = pattern.value;

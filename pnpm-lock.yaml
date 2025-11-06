@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@cardog/corgi':
+        specifier: ^1.2.2
+        version: 1.2.2(sql.js@1.13.0)
       better-sqlite3:
         specifier: ^9.4.1
         version: 9.6.0
@@ -84,6 +87,13 @@ packages:
 
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
+
+  '@cardog/corgi@1.2.2':
+    resolution: {integrity: sha512-GfoepPGIRE+OQUkCBll4nGFCONn+vovftQsxMccMHeSomNAnq9GDUBGkBZMTDDcgoquc+hpJ23Q+3fAuZyuMCA==}
+    engines: {node: '>=16.0.0'}
+    hasBin: true
+    peerDependencies:
+      sql.js: ^1.8.0
 
   '@changesets/apply-release-plan@7.0.12':
     resolution: {integrity: sha512-EaET7As5CeuhTzvXTQCRZeBUcisoYPDDcXvgTE/2jmmypKp0RC7LxKj/yzqeh/1qFTZI7oDGFcL1PHRuQuketQ==}
@@ -1937,6 +1947,12 @@ snapshots:
       '@babel/helper-validator-identifier': 7.27.1
 
   '@bcoe/v8-coverage@0.2.3': {}
+
+  '@cardog/corgi@1.2.2(sql.js@1.13.0)':
+    dependencies:
+      better-sqlite3: 9.6.0
+      commander: 12.1.0
+      sql.js: 1.13.0
 
   '@changesets/apply-release-plan@7.0.12':
     dependencies:

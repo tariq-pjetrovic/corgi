@@ -36,7 +36,6 @@ const server = createServer(async (req, res) => {
 
   try {
     const result = await decoder.decode(vin);
-
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.end(
@@ -45,8 +44,13 @@ const server = createServer(async (req, res) => {
           vin: result.vin,
           valid: result.valid,
           vehicle: result.components.vehicle,
+          cab: result.components.vehicle.cab ?? 'no result',
+          bedLength: result.components.vehicle.bedLength ?? 'no result',
+          wheelbase: result.components.vehicle.wheelbase ?? 'no result',
           engine: result.components.engine,
           plant: result.components.plant,
+          vds: result.components.vds,
+          vis: result.components.vis,
           errors: result.errors,
         },
         null,
