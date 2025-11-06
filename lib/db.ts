@@ -143,9 +143,10 @@ export class VPICDatabase {
           w.Wmi as code,
           m.Name as manufacturer,
           ma.Name as make,
+          ma.Id as makeId,
           c.Name as country,
           vt.Name as vehicleType,
-          CASE 
+          CASE
             WHEN c.Name IN ('UNITED STATES', 'CANADA', 'MEXICO') THEN 'NORTH AMERICA'
             WHEN c.Name IN ('JAPAN', 'KOREA', 'CHINA', 'TAIWAN') THEN 'ASIA'
             WHEN c.Name IN ('GERMANY', 'UNITED KINGDOM', 'ITALY', 'FRANCE', 'SWEDEN') THEN 'EUROPE'
@@ -161,10 +162,11 @@ export class VPICDatabase {
         LEFT JOIN VehicleType vt ON w.VehicleTypeId = vt.Id
         WHERE w.Wmi = ?
       )
-      SELECT 
+      SELECT
         code,
         manufacturer,
         make,
+        makeId,
         country,
         vehicleType,
         region

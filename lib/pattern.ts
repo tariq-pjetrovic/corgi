@@ -13,6 +13,7 @@ const LOOKUP_TABLES = [
   'FuelType',
   'Transmission',
   'BodyStyle',
+  'BodyCab',
   'GrossVehicleWeightRating',
   'GrossVehicleWeightRatingTo',
   'GrossVehicleWeightRatingFrom',
@@ -24,6 +25,8 @@ const LOOKUP_TABLES = [
   'Model',
   'Series',
   'Trim',
+  'BedType',
+  'WheelBaseType',
   'Turbo',
   'DaytimeRunningLight',
   'Plant',
@@ -618,8 +621,13 @@ export class PatternMatcher {
           groupName: row.GroupName,
           description: row.Description?.toString() ?? null,
           lookupTable: row.LookupTable,
-          attributeId: row.ResolvedValue ? String(row.ResolvedValue) : null,
-          value: row.ResolvedValue ? String(row.ResolvedValue) : null,
+          attributeId: row.AttributeId != null ? String(row.AttributeId) : null,
+          value:
+            row.ResolvedValue != null
+              ? String(row.ResolvedValue)
+              : row.AttributeId != null
+                ? String(row.AttributeId)
+                : null,
           schemaName: row.SchemaName,
           yearFrom: row.YearFrom,
           yearTo: row.YearTo,

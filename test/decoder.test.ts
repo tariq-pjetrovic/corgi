@@ -6,6 +6,8 @@ import {
   DecodeResult,
   BodyStyle,
 } from "../lib/types";
+import type { PatternMatch, VehicleInfo, WMIResult } from "../lib/types";
+import { PatternMatcher } from "../lib/pattern";
 import {
   NodeDatabaseAdapter,
   NodeDatabaseAdapterFactory,
@@ -142,6 +144,18 @@ describe("VIN Decoder Library", () => {
       expect(result.components.vehicle?.year).toBe(
         VALID_TEST_CASES[0].expected.year
       );
+      expect(result.components.vehicle).toHaveProperty("drivetrain");
+      expect(result.components.vehicle).toHaveProperty("fuelType");
+      expect(result.components.vehicle).toHaveProperty("trim");
+      expect(result.components.vehicle).toHaveProperty("cab");
+      expect(result.components.vehicle).toHaveProperty("bed");
+      expect(result.components.vehicle).toHaveProperty("wheelbase");
+
+      if (result.components.vehicle?.driveType) {
+        expect(result.components.vehicle?.drivetrain).toBe(
+          result.components.vehicle?.driveType
+        );
+      }
 
       // Check manufacturer info
       expect(result.components.wmi).toBeDefined();
@@ -157,6 +171,220 @@ describe("VIN Decoder Library", () => {
 
     // Body style normalization is tested elsewhere and dependent on database content
     // This test has been removed due to data variability issues
+  });
+
+  describe("Vehicle metadata mapping", () => {
+    it("propagates attribute identifiers from patterns onto vehicle info", () => {
+      const dummyAdapter: DatabaseAdapter = {
+        async exec() {
+          return [{ columns: [], values: [] }];
+        },
+        async close() {
+          // no-op for tests
+        },
+      };
+
+      const decoder = new VINDecoder(dummyAdapter);
+
+      const patterns: PatternMatch[] = [
+        {
+          element: "Make",
+          code: "MK",
+          attributeId: "482",
+          value: "Hyundai",
+          confidence: 1,
+          positions: [],
+          schema: "TestSchema",
+          metadata: { elementWeight: 5 },
+        },
+        {
+          element: "Model",
+          code: "MD",
+          attributeId: "2107",
+          value: "Kona",
+          confidence: 1,
+          positions: [],
+          schema: "TestSchema",
+          metadata: { elementWeight: 10 },
+        },
+        {
+          element: "Series",
+          code: "SR",
+          attributeId: "900",
+          value: "SEL",
+          confidence: 1,
+          positions: [],
+          schema: "TestSchema",
+          metadata: { elementWeight: 6 },
+        },
+        {
+          element: "Trim",
+          code: "TR",
+          attributeId: "901",
+          value: "Limited",
+          confidence: 1,
+          positions: [],
+          schema: "TestSchema",
+          metadata: { elementWeight: 7 },
+        },
+        {
+          element: "Drive Type",
+          code: "DT",
+          attributeId: "12",
+          value: "4WD/4-Wheel Drive/4x4",
+          confidence: 1,
+          positions: [],
+          schema: "TestSchema",
+          metadata: { elementWeight: 4 },
+        },
+        {
+          element: "Fuel Type",
+          code: "FT",
+          attributeId: "5",
+          value: "Gasoline",
+          confidence: 1,
+          positions: [],
+          schema: "TestSchema",
+          metadata: { elementWeight: 4 },
+        },
+        {
+          element: "Body Cab Type",
+          code: "CB",
+          attributeId: "4",
+          value: "Crew/Super Crew/Crew Max",
+          confidence: 1,
+          positions: [],
+          schema: "TestSchema",
+          metadata: { elementWeight: 4, lookupTable: "BodyCab" },
+        },
+        {
+          element: "Cab Type",
+          code: "CB2",
+          attributeId: "14",
+          value: "Crew Cab",
+          confidence: 1,
+          positions: [],
+          schema: "TestSchema",
+          metadata: { elementWeight: 3 },
+        },
+        {
+          element: "Bed Type",
+          code: "BD",
+          attributeId: "2",
+          value: "Short",
+          confidence: 1,
+          positions: [],
+          schema: "TestSchema",
+          metadata: { elementWeight: 4, lookupTable: "BedType" },
+        },
+        {
+          element: "Bed Length",
+          code: "BDL",
+          attributeId: "77",
+          value: "67 inches",
+          confidence: 1,
+          positions: [],
+          schema: "TestSchema",
+          metadata: { elementWeight: 3 },
+        },
+        {
+          element: "Wheel Base Type",
+          code: "WB",
+          attributeId: "6",
+          value: "Medium",
+          confidence: 1,
+          positions: [],
+          schema: "TestSchema",
+          metadata: { elementWeight: 4, lookupTable: "WheelBaseType" },
+        },
+        {
+          element: "Wheel Base",
+          code: "WB2",
+          attributeId: "88",
+          value: "103.5 inches",
+          confidence: 1,
+          positions: [],
+          schema: "TestSchema",
+          metadata: { elementWeight: 3 },
+        },
+      ];
+
+      const wmiInfo: WMIResult = {
+        code: "KM8",
+        manufacturer: "Hyundai Motor Company",
+        make: "Hyundai",
+        makeId: 482,
+        country: "Korea",
+        vehicleType: "MPV",
+        region: "ASIA",
+      };
+
+      const modelYear = { year: 2023, source: "override" as const, confidence: 1 };
+
+      const info = (decoder as any).extractVehicleInfo(
+        patterns,
+        wmiInfo,
+        modelYear,
+      ) as VehicleInfo;
+
+      expect(info.makeId).toBe("482");
+      expect(info.modelId).toBe("2107");
+      expect(info.seriesId).toBe("900");
+      expect(info.trimId).toBe("901");
+      expect(info.driveTypeId).toBe("12");
+      expect(info.drivetrainId).toBe("12");
+      expect(info.fuelTypeId).toBe("5");
+      expect(info.cabTypeId).toBe("4");
+      expect(info.bedTypeId).toBe("2");
+      expect(info.wheelbaseId).toBe("6");
+      expect(info.make).toBe("Hyundai");
+      expect(info.model).toBe("Kona");
+      expect(info.cab).toBe("Crew/Super Crew/Crew Max");
+      expect(info.bed).toBe("Short");
+      expect(info.wheelbase).toBe("Medium");
+    });
+  });
+
+  describe("Pattern matcher transformations", () => {
+    it("retains original attribute identifiers when cleaning raw matches", () => {
+      const dummyAdapter: DatabaseAdapter = {
+        async exec() {
+          return [{ columns: [], values: [] }];
+        },
+        async close() {
+          // no-op for tests
+        },
+      };
+
+      const matcher = new PatternMatcher(dummyAdapter);
+
+      const rawMatch = {
+        pattern: "ABCDEF",
+        elementId: 1,
+        elementName: "Model",
+        element: "Model",
+        elementCode: "MD",
+        groupName: "Vehicle",
+        description: null,
+        lookupTable: "Model",
+        attributeId: "2107",
+        value: "Kona",
+        schemaName: "TestSchema",
+        yearFrom: 2023,
+        yearTo: 2023,
+        confidence: 1,
+        keys: "ABCDEF",
+        elementWeight: 10,
+        patternType: "VDS" as const,
+        positions: [3, 4, 5],
+      };
+
+      const transformed = (matcher as any).transformPatternMatch(rawMatch) as PatternMatch;
+
+      expect(transformed.attributeId).toBe("2107");
+      expect(transformed.value).toBe("Kona");
+      expect(transformed.metadata?.lookupTable).toBe("Model");
+    });
   });
 
   describe("Factory Methods", () => {
