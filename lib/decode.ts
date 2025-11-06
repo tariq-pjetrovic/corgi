@@ -335,6 +335,13 @@ export class VINDecoder {
       year: modelYear.year,
       manufacturer: wmiInfo.manufacturer,
       gvwr: '',
+      trim: undefined,
+      fuelType: undefined,
+      driveType: undefined,
+      drivetrain: undefined,
+      cab: undefined,
+      bedLength: undefined,
+      wheelbase: undefined,
     };
 
     // First, sort model patterns by elementWeight (if available)
@@ -382,6 +389,55 @@ export class VINDecoder {
           break;
         case 'Drive Type':
           info.driveType = pattern.value;
+          info.drivetrain = pattern.value;
+          break;
+        case 'Drive Type - Primary':
+        case 'Drive Configuration':
+        case 'Driveline':
+          info.drivetrain = pattern.value;
+          if (!info.driveType) {
+            info.driveType = pattern.value;
+          }
+          break;
+        case 'Cab Type':
+        case 'Cab Style':
+        case 'Cab Configuration':
+        case 'Cab':
+        case 'Body Cab Type':
+        case 'Body Cab':
+        case 'BodyCab':
+        case 'BodyCabType':
+          info.cab = pattern.value;
+          break;
+        case 'Bed Length':
+        case 'Bed Type':
+        case 'BedType':
+        case 'Cargo Bed Type':
+        case 'Cargo Bed Length':
+        case 'Cargo Bed Length (IN)':
+        case 'Cargo Bed Length (inches)':
+        case 'Cargo Bed Length (in) - Min':
+        case 'Cargo Bed Length (in) - Max':
+        case 'Truck Bed Length':
+          info.bedLength = pattern.value;
+          break;
+        case 'Wheel Base':
+        case 'Wheel Base (Inches) - Min':
+        case 'Wheel Base (Inches) - Max':
+        case 'Wheel Base (in) - Min':
+        case 'Wheel Base (in) - Max':
+        case 'Wheelbase (inches)':
+        case 'Wheel Base (inches)':
+        case 'Wheel Base (in)':
+        case 'Wheel Base (mm)':
+        case 'Wheel Base Type':
+        case 'WheelBaseType':
+        case 'Wheelbase Type':
+          info.wheelbase = pattern.value;
+          break;
+        case 'Fuel Type':
+          primaryFuelType = pattern.value;
+          info.fuelType = pattern.value;
           break;
         case 'Fuel Type - Primary':
           primaryFuelType = pattern.value;
