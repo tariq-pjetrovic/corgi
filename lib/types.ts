@@ -314,13 +314,13 @@ export interface VehicleInfo {
   fuelType?: string;
 
   /** Cab configuration (for trucks, vans, etc.) */
-  BodyCab?: string;
+  cab?: string;
 
   /** Bed length specification when applicable */
-  BedType?: string;
+  bedLength?: string;
 
   /** Wheelbase specification when available */
-  WheelBaseType?: string;
+  wheelbase?: string;
 
   /** Transmission type */
   transmission?: string;
